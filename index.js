@@ -26,15 +26,30 @@ app.post('/compress-image', upload.array('images'), async (req, res) => {
   try {
     const images = req.files;
 
-    // Compress each image
+    // Check if images were uploaded
+    if (!images || images.length === 0) {
+      return res.status(400).json({ error: 'No images uploaded' });
+    }
+
+    // Process each image
     const compressedImages = await Promise.all(images.map(async (image) => {
-      const compressedImageBuffer = await compressImage(image.buffer, 100); // Adjust quality or target size as needed
-      return { filename: image.originalname, buffer: compressedImageBuffer };
+      try {
+        // Compress the image using sharp
+        const compressedImageBuffer = await sharp(image.buffer)
+          .resize({ width: 800, withoutEnlargement: true, fit: 'inside', kernel: sharp.kernel.lanczos3 })
+          .jpeg({ quality: 80, mozjpeg: true, chromaSubsampling: '4:4:4' })
+          .toBuffer();
+        
+        return { filename: image.originalname, buffer: compressedImageBuffer };
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        return { filename: image.originalname, error: 'Failed to compress image' };
+      }
     }));
 
     res.json(compressedImages);
   } catch (error) {
-    console.error('Error compressing image:', error);
+    console.error('Error processing images:', error);
     res.status(500).send('Internal Server Error');
   }
 });
