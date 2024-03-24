@@ -10,7 +10,13 @@ app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 
 
 const port = 8000;
-app.use(cors());
+// Enable CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*'); // Allow requests from any origin (replace '*' with specific origins if needed)
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); // Allow GET, POST, OPTIONS requests
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept'); // Allow specific headers
+  next();
+});
 
 app.use(express.json());
 
