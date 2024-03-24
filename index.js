@@ -10,6 +10,7 @@ app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 
 
 const port = 8000;
+app.use(cors());
 
 app.use(express.json());
 
