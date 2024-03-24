@@ -1,54 +1,55 @@
 const express = require('express');
 const sharp = require('sharp');
 const bodyParser = require('body-parser');
+const multer = require('multer');
 
 const app = express();
+const port = 8000;
 
 // Increase payload size limit (e.g., 100MB)
 app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 
+// Enable CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
 
-const port = 8000;
+// Multer configuration for handling file uploads
+const upload = multer({ dest: 'uploads/' });
 
-app.use(express.json());
-
-app.post('/compress-image', async (req, res) => {
+// Route for compressing images
+app.post('/compress-image', upload.array('images'), async (req, res) => {
   try {
-    const { imageBuffer, targetSizeKB } = req.body;
-    
-    // Compress the image using your compressImage function
-    const compressedImageBuffer = await compressImage(imageBuffer, targetSizeKB);
-    
-    // Send the compressed image back as a response
-    res.send({ compressedImageBuffer });
+    const images = req.files;
+
+    // Compress each image
+    const compressedImages = await Promise.all(images.map(async (image) => {
+      const compressedImageBuffer = await compressImage(image.buffer, 100); // Adjust quality or target size as needed
+      return { filename: image.originalname, buffer: compressedImageBuffer };
+    }));
+
+    res.json(compressedImages);
   } catch (error) {
     console.error('Error compressing image:', error);
     res.status(500).send('Internal Server Error');
   }
 });
 
+// Function to compress image buffer
 async function compressImage(imageBuffer, targetSizeKB) {
-  let compressedImageBuffer = imageBuffer;
-  let currentQuality = 80; // Initial quality setting
-
-  while (compressedImageBuffer.length > targetSizeKB * 1024 && currentQuality > 0) {
-    try {
-      // Compress the image using sharp
-      compressedImageBuffer = await sharp(compressedImageBuffer)
-        .resize({ width: 800, withoutEnlargement: true, fit: 'inside', kernel: sharp.kernel.lanczos3 })
-        .jpeg({ quality: currentQuality, mozjpeg: true, chromaSubsampling: '4:4:4' })
-        .toBuffer();
-
-      // Decrease quality for next iteration
-      currentQuality -= 10;
-    } catch (error) {
-      console.error('Error compressing image:', error);
-      throw error; // Rethrow the error to be handled at a higher level
-    }
+  try {
+    return await sharp(imageBuffer)
+      .resize({ width: 800, withoutEnlargement: true, fit: 'inside', kernel: sharp.kernel.lanczos3 })
+      .jpeg({ quality: 80, mozjpeg: true, chromaSubsampling: '4:4:4' })
+      .toBuffer();
+  } catch (error) {
+    console.error('Error compressing image:', error);
+    throw error;
   }
-
-  return compressedImageBuffer;
 }
 
 app.listen(port, () => {
