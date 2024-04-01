@@ -45,7 +45,7 @@ app.post('/compress-upload', async (req, res) => {
       let newBuffer = image.data;
 
       // Compress the image
-      const compressedBuffer = await compressImage(newBuffer, 100);
+      const compressedBuffer = await compressImage(newBuffer, 400);
 
       const flipAndWatermark = req.query.flipAndWatermark === 'true';
 
@@ -90,7 +90,7 @@ async function flipAndWatermarkImage(imageBuffer) {
 
 async function compressImage(imageBuffer, targetSizeKB) {
   let compressedImageBuffer = imageBuffer;
-  let currentQuality = 80; // Initial quality setting
+  let currentQuality = 95; // Initial quality setting
 
   while (compressedImageBuffer.length > targetSizeKB * 1024 && currentQuality > 0) {
     try {
@@ -99,7 +99,7 @@ async function compressImage(imageBuffer, targetSizeKB) {
         .jpeg({ quality: currentQuality, mozjpeg: true, chromaSubsampling: '4:4:4' })
         .toBuffer();
 
-      currentQuality -= 10;
+      currentQuality -= 1;
     } catch (error) {
       console.error('Error compressing image:', error);
       throw error;
