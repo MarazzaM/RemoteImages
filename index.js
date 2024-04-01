@@ -43,14 +43,19 @@ app.post('/compress-upload', async (req, res) => {
   for (const image of images) {
     try {
       let newBuffer = image.data;
+
+      // Compress the image
+      const compressedBuffer = await compressImage(newBuffer, 100);
+
       const flipAndWatermark = req.query.flipAndWatermark === 'true';
 
       if (flipAndWatermark) {
-        newBuffer = await flipAndWatermarkImage(image.data);
+        // Apply watermark to the compressed image
+        newBuffer = await flipAndWatermarkImage(compressedBuffer);
       }
 
-      const compressedBuffer = await compressImage(newBuffer, 100);
-      const url = await uploadToS3(compressedBuffer);
+      // Upload the image to S3
+      const url = await uploadToS3(newBuffer);
       urls.push(url);
     } catch (error) {
       console.error('Error processing image:', error);
@@ -59,6 +64,7 @@ app.post('/compress-upload', async (req, res) => {
   console.log('Urls', urls);
   return res.status(200).send({ message: 'File upload', urls: urls });
 });
+
 
 async function flipAndWatermarkImage(imageBuffer) {
   const watermarkPath = path.join(__dirname, 'f1.png');
