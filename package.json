@@ -20,6 +20,7 @@
     "express": "^4.19.2",
     "express-fileupload": "^1.5.0",
     "i": "^0.3.7",
+    "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.0",
     "npm": "^10.5.0",
     "sharp": "^0.33.3",
