@@ -47,7 +47,7 @@ const uploadImage = async (req, res) => {
 
 
 async function flipAndWatermarkImage(imageBuffer) {
-    const watermarkPath = path.join(__dirname, 'f1.png');
+    const watermarkPath = path.join(__dirname, '../f1.png');
     const watermarkBuffer = fs.readFileSync(watermarkPath);
   
     // Resize the watermark image to match the dimensions of the image being processed

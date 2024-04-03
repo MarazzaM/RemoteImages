@@ -22,8 +22,8 @@ class Server {
       res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS"); // Allow GET, POST, OPTIONS requests
       res.header(
         "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept"
-      ); // Allow specific headers
+        "Origin, X-Requested-With, Content-Type, Accept, x-token" // Include Authorization header
+    ); 
       next();
     });
     // Increase payload size limit (e.g., 100MB)
