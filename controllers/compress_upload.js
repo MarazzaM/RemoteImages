@@ -1,7 +1,7 @@
 
 require('dotenv').config();
 const sharp = require('sharp');
-const {  S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const {  S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
@@ -13,6 +13,19 @@ const client = new S3Client({
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
     }
   });
+
+function getImageKey(imageUrl) {
+  return imageUrl.split('/').pop();
+}
+
+const deleteImageClientS3 = async (url) => {
+  const key = getImageKey(url);
+  const command = new DeleteObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: `images/${key}`,
+  });
+  return await client.send(command);
+};
 
 const uploadImage = async (req, res) => {
     let images = req.files.images;
@@ -108,6 +121,28 @@ async function flipAndWatermarkImage(imageBuffer) {
       throw error;
     }
   }
+
+
+  const cleanningImages = async (req, res) => {
+    console.log('Body', req.body)
+    const imagesUrls = req.body.images;
+    console.log( 'Images', imagesUrls)
+    const urlsSuccessDeleted = [];
+    try {
+      for (const url of imagesUrls) {
+          await deleteImageClientS3(url);
+      }
+      console.log('Urls', urlsSuccessDeleted);
+      return res.status(200).send({ message: 'Deleted files:' });
+    }
+    catch (error) {
+      console.error('Error deleting image:', error);
+      return res.status(500).send({ message: 'Error deleting files:', error });
+    }
+  };
+
+
   module.exports = {
-    uploadImage
+    uploadImage,
+    cleanningImages
   }

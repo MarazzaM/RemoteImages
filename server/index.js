@@ -8,6 +8,7 @@ class Server {
     this.app = express();
     this.port = process.env.DEFAULT_PORT || 8000;
     this.compress_upload = "/compress-upload";
+    this.cleanning_images = "/cleanning-images";
 
     //Middlewares
     this.middelwares();
@@ -37,6 +38,7 @@ class Server {
 
   routes() {
     this.app.use(this.compress_upload, require("../routes/compress_upload"));
+    this.app.use(this.cleanning_images, require("../routes/images_cleanning"));
   };
 
   listen() {
