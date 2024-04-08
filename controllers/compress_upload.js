@@ -85,22 +85,36 @@ async function flipAndWatermarkImage(imageBuffer) {
     let compressedImageBuffer = imageBuffer;
     let currentQuality = 95; // Initial quality setting
   
-    while (compressedImageBuffer.length > targetSizeKB * 1024 && currentQuality > 0) {
-      try {
+    try {
+        // Apply rotation correction, resize, and JPEG compression
         compressedImageBuffer = await sharp(compressedImageBuffer)
-          .resize({ width: 800, withoutEnlargement: true, fit: 'inside', kernel: sharp.kernel.lanczos3 })
-          .jpeg({ quality: currentQuality, mozjpeg: true, chromaSubsampling: '4:4:4' })
-          .toBuffer();
-  
-        currentQuality -= 1;
-      } catch (error) {
+            .rotate() // Automatically rotate based on EXIF orientation
+            .resize({ width: 800, withoutEnlargement: true, fit: 'inside', kernel: sharp.kernel.lanczos3 })
+            .jpeg({ quality: currentQuality, mozjpeg: true, chromaSubsampling: '4:4:4' })
+            .toBuffer();
+    } catch (error) {
         console.error('Error compressing image:', error);
         throw error;
-      }
+    }
+  
+    // Perform size check and quality adjustment if needed
+    while (compressedImageBuffer.length > targetSizeKB * 1024 && currentQuality > 0) {
+        try {
+            compressedImageBuffer = await sharp(compressedImageBuffer)
+                .jpeg({ quality: currentQuality, mozjpeg: true, chromaSubsampling: '4:4:4' })
+                .toBuffer();
+  
+            currentQuality -= 1;
+        } catch (error) {
+            console.error('Error compressing image:', error);
+            throw error;
+        }
     }
   
     return compressedImageBuffer;
-  }
+}
+
+
   
   async function uploadToS3(imageBuffer) {
     const extension = 'jpeg'; // Assuming the extension of the image after compression
